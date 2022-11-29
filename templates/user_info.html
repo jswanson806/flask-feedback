@@ -4,9 +4,35 @@
 
 {% block content %}
 <h1>User Profile</h1>
-<h3>{{user.username}}</h3>
+<li>Username: {{user.username}}</li>
 <li>Name: {{user.first_name}} {{user.last_name}}</li>
 <li>Email: {{user.email}}</li>
+<h2>Feedback</h2>
+{% for feedback in user.feedback %} <br>
+<div>
+    <b>{{ feedback.title }}</b>
+   
+<div>
+    <p>{{ feedback.content }}</p>
+    {% if session['user_id'] == user.username %}
+    <form method="POST">
+        <button>x</button>
+    </form>
+    <form action="/feedback/{{feedback.id}}/update">
+        <button>edit</button>
+    </form>
+</div>
+</div> <br>
+
+{% endif %}
+{% endfor %}
+
+<form action="/users/{{user.username}}/feedback/add">
+    <button>add feedback</button>
+</form> <br>
+<form action="/users/{{user.username}}/delete">
+    <button>delete account</button>
+</form> <br>
 
 <form action="/logout" method="POST">
     <button class="btn btn-link">Logout</button>

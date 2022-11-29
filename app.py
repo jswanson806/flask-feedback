@@ -1,7 +1,7 @@
 from flask import Flask, redirect, render_template, session, flash
 from flask_debugtoolbar import DebugToolbarExtension
-from models import db, connect_db, User
-from forms import RegisterForm, LoginForm
+from models import db, connect_db, User, Feedback
+from forms import RegisterForm, LoginForm, FeedbackForm
 from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
@@ -38,7 +38,7 @@ def user_register_form():
             form.username.errors.append('Username taken. Please pick another.')
             return render_template('register.html', form=form)
         session['user_id'] = new_user.username
-        return redirect('/secret')
+        return redirect(f'/users/{username}')
     else:
         return render_template('register.html', form=form)
 
@@ -71,3 +71,33 @@ def logout_user():
     session.pop('user_id')
     flash('Goodbye!')
     return redirect('/login')
+
+@app.route('/users/<username>/feedback/add', methods=['GET', 'POST'])
+def add_feedback(username):
+    if 'user_id' not in session:
+        flash("Please login to view that page!")
+        return redirect(f'/users/{username}')
+
+    form = FeedbackForm()
+    if form.validate_on_submit():
+       title = form.title.data
+       content = form.content.data
+       new_feedback = Feedback(title=title, content=content, username=username)
+
+       db.session.add(new_feedback)
+       db.session.commit()
+       return redirect(f'/users/{username}')
+
+    return render_template('add_feedback.html', form=form)
+
+
+@app.route('/users/<username>/delete', methods=['POST'])
+def delete_user(username):
+    if username == session['user_id']:
+        user = User.query.get_or_404(username)
+        db.session.delete(user)
+        db.session.commit()
+        session.pop('user_id')
+        return redirect('/')
+    flash("You do not have permission to do that.")
+    return redirect(f'/users/{username}')
