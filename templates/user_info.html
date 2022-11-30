@@ -15,7 +15,7 @@
 <div>
     <p>{{ feedback.content }}</p>
     {% if session['user_id'] == user.username %}
-    <form method="POST">
+    <form action="/feedback/{{feedback.id}}/delete" method="POST">
         <button>x</button>
     </form>
     <form action="/feedback/{{feedback.id}}/update">
@@ -30,7 +30,7 @@
 <form action="/users/{{user.username}}/feedback/add">
     <button>add feedback</button>
 </form> <br>
-<form action="/users/{{user.username}}/delete">
+<form action="/users/{{user.username}}/delete" method="POST">
     <button>delete account</button>
 </form> <br>
 

@@ -22,7 +22,22 @@ def redirect_to_register():
 
 @app.route('/register', methods=['GET', 'POST'])
 def user_register_form():
+    """Register a new user. 
+    --------------------------
+     If a user is already logged in, redirects to the user details page.
+
+     Checks for form validation and creates new User instance.
+
+     Trys to commit new_user to the database and redirects to their details page if successful.
+
+     Rerenders the register form if the form is not validated or the user cannot be added to the database.
+    
+    """
     form = RegisterForm()
+    if 'user_id' in session:
+        user = session['user_id']
+        flash("You are already logged in.")
+        return redirect(f'/users/{user}')
     if form.validate_on_submit():
         username = form.username.data
         password = form.username.data
@@ -42,9 +57,27 @@ def user_register_form():
     else:
         return render_template('register.html', form=form)
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def user_login_form():
+    """Logs in a user.
+    --------------------
+    
+    Checks for the user to be in the session already and if so, will redirect to the user details page.
+
+    Checks for form validation calls authenticate() (from the User class) on user if successful.
+
+    Stores information about the user in the session if they are authenticated successfully.
+
+    If validation of the form fails, rerender the login template.
+
+    """
     form = LoginForm()
+    if 'user_id' in session:
+        user = session['user_id']
+        flash("You are already logged in.")
+        return redirect(f'/users/{user}')
+
     if form.validate_on_submit():
         username = form.username.data
         password = form.username.data
@@ -59,6 +92,14 @@ def user_login_form():
 
 @app.route('/users/<username>')
 def user_details(username):
+    """Displays user details page.
+    -------------------------------
+    Checks for the user in the session and redirects to /login if user is not found.
+
+    Renders the user info page if the user is logged in.
+    
+    """
+
     if 'user_id' not in session:
         flash("Please login to view that page!")
         return redirect('/login')
@@ -66,14 +107,33 @@ def user_details(username):
     user = User.query.get_or_404(username)
     return render_template('user_info.html', user=user)
 
+
 @app.route('/logout', methods=['POST'])
 def logout_user():
+    """Logs the user out.
+    -------------------------
+    Removes the user from the session and redirects to the login page.
+    
+    """
+    
     session.pop('user_id')
     flash('Goodbye!')
     return redirect('/login')
 
+
 @app.route('/users/<username>/feedback/add', methods=['GET', 'POST'])
 def add_feedback(username):
+    """Adds feedback from the user.
+    ---------------------------------
+    Checks for the user in the session and redirects to the user details page if user is not found.
+
+    Checks for form validation and creates a new instance of Feedback class upon validation.
+
+    Adds the new_feedback to the database and commits, then redirect to user details page.
+
+    If validation is not successful, rerenders the feedback form.
+    """
+
     if 'user_id' not in session:
         flash("Please login to view that page!")
         return redirect(f'/users/{username}')
@@ -93,6 +153,16 @@ def add_feedback(username):
 
 @app.route('/users/<username>/delete', methods=['POST'])
 def delete_user(username):
+    """Deletes a user.
+    -------------------
+    Checks for the user to be in same user in the session.
+
+    Sends delete request to the database.
+
+    Commits and removes the user from the session (logs them out) and redirects to the register page.
+
+    Redirects to the user details page if the user is not the user in the session (not logged in or the wrong user).
+    """
     if username == session['user_id']:
         user = User.query.get_or_404(username)
         db.session.delete(user)
@@ -101,3 +171,54 @@ def delete_user(username):
         return redirect('/')
     flash("You do not have permission to do that.")
     return redirect(f'/users/{username}')
+
+
+@app.route('/feedback/<feedback_id>/update', methods=['GET', 'POST'])
+def update_feedback(feedback_id):
+    """Updates feedback.
+    ----------------------
+    Checks for the user in the session and redirects to the login page if user is not found (not logged in).
+
+    Creates a new instance of the FeedbackForm class and populates the form with existing data.
+
+    Checks for form validation and commits changes to the database then redirects to the user details page.
+
+    If validation is unsuccessful, rerender the feedback form.
+    """
+    if 'user_id' not in session:
+        flash("Please login to view that page!")
+        return redirect('/login')
+    
+    feedback = Feedback.query.get_or_404(feedback_id)
+    # prefill the form with existing data to be editted
+    form = FeedbackForm(obj=feedback)
+
+    if form.validate_on_submit():
+        feedback.title = form.title.data
+        feedback.content = form.content.data
+        
+        db.session.commit()
+        flash('Feedback updated!')
+        return redirect(f'/users/{feedback.username}')
+    else:
+        return render_template('edit_feedback.html', form=form)
+
+
+@app.route('/feedback/<feedback_id>/delete', methods=['POST'])
+def delete_feedback(feedback_id):
+    """Deletes feedback.
+    -----------------------
+    Checks for the user to be the same user in the session.
+
+    Sends delete request to the database, commits changes, redirects to the user details page.
+
+    If the user is not found in the session (not logged in or the wrong user), redirects to the login page.
+    """
+    feedback = Feedback.query.get_or_404(feedback_id)
+    username = feedback.username
+    if username == session['user_id']:
+        db.session.delete(feedback)
+        db.session.commit()
+        return redirect(f'/users/{username}')
+    flash("You do not have permission to do that.")
+    return redirect('/login')

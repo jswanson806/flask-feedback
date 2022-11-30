@@ -1,11 +1,10 @@
 {% extends 'base.html' %}
 
-{% block title %} Registration {% endblock %}
+{% block title %} Feedback {% endblock %}
 
 {% block content %}
 
-<h1>Sign Up</h1>
-<p>Register to join</p>
+<h1>Edit Feedback</h1>
 
 <form method="POST">
 
@@ -23,8 +22,7 @@
     </p>
     {% endfor %}
 
-    <button type="submit">Register</button>
-    <small>Already registered? Log in <a href="/login">here</a></small>
+    <button type="submit">Save</button>
 </form>
 
 {% endblock %}

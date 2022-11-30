@@ -17,6 +17,14 @@ class User(db.Model):
     >>> email = db.Column(db.String(length=50), nullable=False, unique=True)
     >>> first_name = db.Column(db.String(length=30), nullable=False)
     >>> last_name = db.Column(db.String(length=30), nullable=False)
+
+    >>> @classmethod
+        def register(cls, username, pwd, email, first_name, last_name):
+           Register user w/hashed password & return user.
+
+    >>> @classmethod
+        def authenticate(cls, username, pwd):
+        Validate that user exists & password is correct.
     """
 
     __tablename__ = 'users'
@@ -26,6 +34,8 @@ class User(db.Model):
     email = db.Column(db.String(length=50), nullable=False, unique=True)
     first_name = db.Column(db.String(length=30), nullable=False)
     last_name = db.Column(db.String(length=30), nullable=False)
+
+    feedback = db.relationship('Feedback', backref="users", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User {self.username} email {self.email} firstname {self.first_name} lastname {self.last_name}>"
@@ -60,11 +70,10 @@ class User(db.Model):
 class Feedback(db.Model):
     """Feedback model
     
-    >>>
-    >>>
-    >>>
-    >>>
-    >>>
+    >>> id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    >>> title = db.Column(db.String(length=100), nullable=False)
+    >>> content = db.Column(db.String, nullable=False)
+    >>> username = db.Column(db.String, db.ForeignKey('users.username'), nullable=False)
     """
 
     __tablename__ = "feedback"
@@ -73,8 +82,6 @@ class Feedback(db.Model):
     title = db.Column(db.String(length=100), nullable=False)
     content = db.Column(db.String, nullable=False)
     username = db.Column(db.String, db.ForeignKey('users.username'), nullable=False)
-
-    user = db.relationship('User', backref="feedback", single_parent=True, cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Feedback ID {self.id} title {self.title} username {self.username}>"
